@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#14171C">
+<title>MetalStock AI</title>
+<style>
+:root{
+  --bg:#14171C; --panel:#1E2229; --raised:#262B33; --sunken:#11141A;
+  --line:#333A44; --lineSoft:#252B33; --text:#ECE9E2; --muted:#8B92A0; --faint:#5B6472;
+  --hazard:#FF6A1A; --hazardSoft:#3A2418; --cal:#4FD1C5; --calSoft:#123333;
+  --good:#6EE7A8; --goodSoft:#123A29; --warn:#FBBF24; --warnSoft:#3A2E10;
+  --bad:#F87171; --badSoft:#3A1616;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);height:100%;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  overscroll-behavior:none}
+body{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+#main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px 26px}
+#main::-webkit-scrollbar{display:none}
+h1.page{font-size:26px;font-weight:800;margin:4px 0 0;letter-spacing:-.4px}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--faint);margin:18px 0 0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px}
+.row{display:flex;align-items:center;gap:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:14px;
+  padding:16px 12px;font-size:16px;font-weight:700;border:none;cursor:pointer;font-family:inherit}
+.btn:active{transform:scale(.985)}
+.btn.primary{background:var(--hazard);color:#1A0D05}
+.btn.primary[disabled]{background:var(--raised);color:var(--faint)}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+.chip{flex:0 0 auto;padding:9px 13px;border-radius:999px;font-size:13px;font-weight:700;
+  background:var(--panel);color:var(--muted);border:1px solid var(--line);cursor:pointer;
+  white-space:nowrap;font-family:inherit}
+.chip.on{background:var(--calSoft);color:var(--cal);border-color:#4FD1C555}
+.chip.on.orange{background:var(--hazardSoft);color:var(--hazard);border-color:#FF6A1A55}
+.scroller{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.scroller::-webkit-scrollbar{display:none}
+label.lab{display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  color:var(--faint);margin:0 0 6px}
+.inputwrap{display:flex;align-items:center;gap:6px;background:var(--sunken);border:1px solid var(--line);
+  border-radius:10px;padding:0 12px}
+.inputwrap.accent{border-color:var(--cal)}
+input,textarea{background:transparent;border:none;outline:none;color:var(--text);
+  font-family:ui-monospace,Menlo,monospace;font-size:16px;padding:12px 0;width:100%}
+textarea{font-family:inherit;font-size:15px;resize:none}
+.suffix{font-size:12px;color:var(--faint);font-family:ui-monospace,monospace}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 8px;
+  border-radius:999px;background:var(--raised);color:var(--muted)}
+.badge.good{background:var(--goodSoft);color:var(--good)}
+.badge.warn{background:var(--warnSoft);color:var(--warn)}
+.badge.bad{background:var(--badSoft);color:var(--bad)}
+.bar{height:8px;border-radius:999px;background:var(--sunken);overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--cal);border-radius:999px}
+.thumb{width:62px;height:62px;border-radius:10px;flex:0 0 auto;border:1px solid var(--line);
+  object-fit:cover;display:flex;align-items:center;justify-content:center;font-weight:800;
+  color:rgba(17,20,26,.6);font-size:15px}
+.listitem{display:flex;gap:12px;align-items:center;width:100%;text-align:left;padding:11px;
+  background:var(--panel);border:1px solid var(--line);border-radius:14px;margin-bottom:10px;
+  cursor:pointer;color:inherit;font-family:inherit}
+.divide>div{border-top:1px solid var(--lineSoft)}
+.divide>div:first-child{border-top:none}
+.kv{display:flex;justify-content:space-between;padding:12px 15px;font-size:14px}
+.kv span:first-child{color:var(--muted)}
+.kv span:last-child{font-family:ui-monospace,monospace;font-weight:600}
+#nav{display:flex;justify-content:space-around;align-items:center;background:var(--panel);
+  border-top:1px solid var(--line);padding:8px 4px calc(10px + env(safe-area-inset-bottom))}
+#nav button{background:none;border:none;color:var(--faint);font-size:10px;font-weight:700;
+  display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 12px;cursor:pointer;font-family:inherit}
+#nav button.on{color:var(--hazard)}
+#nav .fab{width:54px;height:54px;border-radius:50%;background:var(--hazard);margin-top:-26px;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(255,106,26,.45)}
+#top{display:flex;align-items:center;justify-content:space-between;
+  padding:calc(8px + env(safe-area-inset-top)) 18px 6px;font-size:11px;letter-spacing:2px;
+  color:var(--faint);font-family:ui-monospace,monospace}
+.steps{display:flex;gap:6px;margin:10px 0 16px}
+.steps i{flex:1;height:4px;border-radius:999px;background:var(--lineSoft)}
+.steps i.on{background:var(--hazard)}
+.back{width:34px;height:34px;border-radius:50%;background:var(--raised);border:none;display:flex;
+  align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto}
+#cam{position:fixed;inset:0;background:#000;z-index:90;display:none;overflow:hidden}
+/* video is a full-bleed background layer; every control floats above it, so
+   nothing can push the shutter off the bottom of the screen */
+#cam video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000;z-index:1}
+.camtop{position:absolute;top:0;left:0;right:0;z-index:3;display:flex;
+  justify-content:space-between;align-items:center;
+  padding:calc(10px + env(safe-area-inset-top)) 16px 14px;
+  background:linear-gradient(180deg,rgba(0,0,0,.65),rgba(0,0,0,0))}
+.camtop button{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.14);border:none;
+  color:#fff;font-size:18px;cursor:pointer}
+.shutterbar{position:absolute;left:0;right:0;bottom:0;z-index:4;display:flex;
+  align-items:center;justify-content:center;
+  padding:18px 0 calc(24px + env(safe-area-inset-bottom));
+  background:linear-gradient(0deg,rgba(0,0,0,.7),rgba(0,0,0,0))}
+.shutter{width:76px;height:76px;border-radius:50%;background:#fff;
+  border:4px solid rgba(255,255,255,.4);cursor:pointer;flex:0 0 auto;
+  box-shadow:0 0 0 2px rgba(0,0,0,.35),0 6px 20px rgba(0,0,0,.5)}
+.shutter:active{transform:scale(.93);background:#e8e8e8}
+.shutter[disabled]{background:#666;border-color:rgba(255,255,255,.2)}
+.camhint{position:absolute;left:50%;transform:translateX(-50%);z-index:3;
+  bottom:calc(140px + env(safe-area-inset-bottom));background:rgba(0,0,0,.65);
+  color:#fff;font-size:12px;padding:8px 15px;border-radius:999px;text-align:center;max-width:88%}
+/* spirit level: fixed target crosshair + a bubble that drifts with phone tilt.
+   Everything is translucent so the piece stays visible underneath. */
+#level{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3;
+  width:150px;height:150px;pointer-events:none;display:none}
+#level .ring{position:absolute;inset:0;border-radius:50%;
+  border:1.5px solid rgba(255,255,255,.38);transition:border-color .25s}
+#level .ring.inner{inset:56px;border-color:rgba(255,255,255,.5)}
+#level .fx,#level .fy{position:absolute;background:rgba(255,255,255,.5);transition:background .25s}
+#level .fx{left:50%;top:-14px;bottom:-14px;width:1.5px;margin-left:-.75px}
+#level .fy{top:50%;left:-14px;right:-14px;height:1.5px;margin-top:-.75px}
+#level .bubble{position:absolute;left:50%;top:50%;width:40px;height:40px;margin:-20px 0 0 -20px;
+  border-radius:50%;border:2px solid rgba(255,255,255,.55);background:rgba(255,255,255,.07);
+  transition:transform .06s linear,border-color .25s,background .25s}
+/* aligned: the whole target goes green, still see-through */
+#level.ok .ring{border-color:rgba(110,231,168,.75)}
+#level.ok .ring.inner{border-color:rgba(110,231,168,.9)}
+#level.ok .fx,#level.ok .fy{background:rgba(110,231,168,.85)}
+#level.ok .bubble{border-color:rgba(110,231,168,.95);background:rgba(110,231,168,.16)}
+.camerr{position:absolute;inset:0;z-index:5;background:#14171C;display:none;
+  flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  padding:32px;color:#fff;text-align:center;font-size:14px;line-height:1.55}
+/* measuring stage */
+.stage{position:relative;border:1px solid var(--line);border-radius:14px;overflow:hidden;
+  background:#000;touch-action:none;user-select:none;-webkit-user-select:none}
+.stage img{display:block;width:100%;max-height:52vh;object-fit:contain}
+.handle{position:absolute;width:40px;height:40px;margin:-20px 0 0 -20px;touch-action:none;
+  cursor:grab;z-index:6;display:flex;align-items:center;justify-content:center}
+.handle .dot{width:11px;height:11px;border-radius:50%;border:1.5px solid rgba(0,0,0,.75);
+  box-shadow:0 0 0 1.5px rgba(255,255,255,.5)}
+.handle .tick{position:absolute;background:rgba(255,255,255,.65)}
+.handle .tick.h{width:26px;height:1px}
+.handle .tick.v{width:1px;height:26px}
+.handle .lbl{position:absolute;top:-4px;left:22px;font-size:9px;font-weight:700;
+  font-family:ui-monospace,monospace;color:#fff;text-shadow:0 1px 3px #000}
+#loupe{position:absolute;width:112px;height:112px;border-radius:50%;overflow:hidden;z-index:9;
+  border:2px solid rgba(255,255,255,.85);box-shadow:0 6px 18px rgba(0,0,0,.6);display:none;
+  pointer-events:none;background:#000}
+#loupe canvas{width:112px;height:112px;display:block}
+#loupe .cross{position:absolute;inset:0;pointer-events:none}
+#loupe .cross:before,#loupe .cross:after{content:"";position:absolute;background:#FF6A1A}
+#loupe .cross:before{left:50%;top:0;bottom:0;width:1px;margin-left:-.5px}
+#loupe .cross:after{top:50%;left:0;right:0;height:1px;margin-top:-.5px}
+.hint{font-size:12.5px;color:var(--faint);line-height:1.5;margin:9px 0 0}
+.notice{display:flex;gap:9px;padding:12px;border-radius:12px;font-size:12.5px;line-height:1.45}
+.spin{width:18px;height:18px;border-radius:50%;border:2px solid var(--calSoft);border-top-color:var(--cal);
+  animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.scanline{position:absolute;left:0;right:0;height:2px;background:var(--cal);
+  box-shadow:0 0 12px 2px var(--cal);transition:top .45s linear}
+.center{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.dropzone{width:100%;aspect-ratio:4/3;border:2px dashed var(--line);border-radius:18px;background:var(--panel);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted);
+  font-size:13.5px;padding:20px;text-align:center}
+.hidefile{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.readout{display:flex;gap:10px;margin-top:12px}
+.readout>div{flex:1;background:var(--sunken);border:1px solid var(--line);border-radius:12px;padding:11px 12px}
+.readout .n{font-family:ui-monospace,monospace;font-size:19px;font-weight:700;color:var(--cal)}
+.readout .l{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--faint);margin-bottom:3px}
+details{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:14px}
+summary{font-size:13px;font-weight:700;cursor:pointer}
+details p{font-size:12.5px;color:var(--muted);line-height:1.55;margin:9px 0 0}
+svg{flex:0 0 auto}
+</style>
+</head>
+<body>
+
+<div id="top"><span>MetalStock AI</span><span id="clock"></span></div>
+<div id="main"></div>
+<div id="nav"></div>
+
+<div id="cam">
+  <div class="camtop">
+    <button id="camClose">✕</button>
+    <span style="color:#fff;font-size:11.5px;letter-spacing:1.2px;font-family:ui-monospace,monospace">HOLD PHONE LEVEL</span>
+    <button id="camFlip">⟲</button>
+  </div>
+  <video id="camVideo" playsinline autoplay muted></video>
+  <div id="level"><div class="ring"></div><div class="ring inner"></div>
+    <div class="fx"></div><div class="fy"></div><div class="bubble" id="bubble"></div></div>
+  <div class="camhint" id="camHint">Rule flat <b>on top of</b> the piece · shoot straight down</div>
+  <div class="shutterbar"><button class="shutter" id="camShot" disabled></button></div>
+  <div class="camerr" id="camErr">
+    <div id="camErrText"></div>
+    <button class="btn ghost" id="camErrPick" style="max-width:260px;color:#fff">Choose a photo instead</button>
+  </div>
+</div>
+
+<input id="filePick" class="hidefile" type="file" accept="image/*">
+<input id="filePickCam" class="hidefile" type="file" accept="image/*" capture="environment">
+
+<script>
+"use strict";
+
+/* ================================ icons ================================ */
+function ic(n,s,c){
+  s=s||20;c=c||"currentColor";
+  var p={
+   home:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 10v10h14V10"/>',
+   box:'<path d="M21 8 12 3 3 8v8l9 5 9-5Z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/>',
+   plus:'<path d="M12 5v14M5 12h14"/>',
+   gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/>',
+   camera:'<path d="M3 8h4l2-3h6l2 3h4v12H3Z"/><circle cx="12" cy="13" r="4"/>',
+   upload:'<path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 17v3h16v-3"/>',
+   check:'<path d="m4 12 5 5L20 6"/>',
+   search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+   alert:'<path d="M12 3 2 20h20L12 3Z"/><path d="M12 9v5M12 17.5v.5"/>',
+   back:'<path d="M15 5l-7 7 7 7"/>',
+   ruler:'<path d="M3 15 15 3l6 6L9 21Z"/><path d="m7 11 2 2M10 8l2 2M13 5l2 2"/>',
+   trend:'<path d="m3 17 6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
+   x:'<path d="M6 6l12 12M18 6 6 18"/>',
+   shield:'<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6Z"/><path d="m9 12 2 2 4-4"/>',
+   card:'<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>'
+  }[n]||'<rect x="4" y="4" width="16" height="16" rx="3"/>';
+  return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="'+c+
+    '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>';
+}
+
+/* ================================ data ================================= */
+var METALS=[
+ {id:"mild_steel",name:"Mild Steel",short:"MS",tint:"#7b8592",density:7.85,grades:["IS 2062 E250","ASTM A36","EN S275JR","EN S355JR"]},
+ {id:"stainless_steel",name:"Stainless Steel",short:"SS",tint:"#c3cbd1",density:8.0,grades:["SS 304","SS 304L","SS 316","SS 316L","SS 202","SS 430"]},
+ {id:"aluminum",name:"Aluminum",short:"AL",tint:"#b8c6ce",density:2.7,grades:["6061-T6","6063-T5","5052-H32","1100-O"]},
+ {id:"alloy_steel",name:"Alloy Steel",short:"AS",tint:"#5a636e",density:7.85,grades:["EN8","EN19","SAE 4140","SAE 4340"]},
+ {id:"copper",name:"Copper",short:"CU",tint:"#c07340",density:8.96,grades:["C11000 ETP","C10200 OFE"]},
+ {id:"brass",name:"Brass",short:"BR",tint:"#c9a544",density:8.5,grades:["C26000","C36000"]}
+];
+var SHAPES=[
+ {id:"rect_plate",name:"Rectangular Plate",geo:"rect"},
+ {id:"square_plate",name:"Square Plate",geo:"rect"},
+ {id:"round_bar",name:"Round Bar / Disc",geo:"circle"},
+ {id:"sheet",name:"Sheet",geo:"rect"}
+];
+/* Reference objects — rectangles of exactly known size (mm).
+   A steel rule IS a rectangle: a marked span along it, by its width. */
+var REFOBJ=[
+ {id:"rule300",name:"Steel rule 300 mm", w:300.0, h:25.0, rule:true,  note:"Mark 0 and 300 on BOTH edges of the rule"},
+ {id:"rule150",name:"Steel rule 150 mm", w:150.0, h:25.0, rule:true,  note:"Mark 0 and 150 on BOTH edges of the rule"},
+ {id:"rule600",name:"Steel rule 600 mm", w:600.0, h:30.0, rule:true,  note:"Good for large plates"},
+ {id:"tape",   name:"Tape measure",      w:500.0, h:25.0, rule:true,  note:"Mark 0 and 500 along both edges of the blade"},
+ {id:"card",   name:"Bank / ID card",    w:85.60, h:53.98,rule:false, note:"Every card is exactly this size — handy for small pieces"},
+ {id:"a4",     name:"A4 paper",          w:297.0, h:210.0,rule:false, note:""},
+ {id:"custom", name:"Custom rectangle",  w:300.0, h:25.0, rule:false, note:"Enter any known rectangle"}
+];
+/* Known spans for the quick two-ruler mode */
+var SPANS=[100,150,200,300,500,1000];
+var THICKS=[1,1.5,2,3,4,5,6,8,10,12,16,20,25];
+var LOW_QTY=5, LOW_KG=60;
+
+function metal(id){for(var i=0;i<METALS.length;i++)if(METALS[i].id===id)return METALS[i];return METALS[0];}
+function shape(id){for(var i=0;i<SHAPES.length;i++)if(SHAPES[i].id===id)return SHAPES[i];return SHAPES[0];}
+function refobj(id){for(var i=0;i<REFOBJ.length;i++)if(REFOBJ[i].id===id)return REFOBJ[i];return REFOBJ[0];}
+function fmt(n,d){if(n===""||n==null||isNaN(n))return"—";var s=Number(n).toFixed(d==null?1:d);return s.replace(/\.0$/,"");}
+function weightKg(geo,L,W,T,dens,q){
+  L=+L||0;W=+W||0;T=+T||0;q=+q||0;
+  var v=geo==="circle"?Math.PI*Math.pow(W/2,2)*T:L*W*T;
+  return (v*dens/1e6)*q;
+}
+function ago(iso){var d=Math.floor((Date.now()-new Date(iso))/864e5);return d<=0?"Today":d===1?"Yesterday":d+" days ago";}
+function uid(){return"m"+Math.random().toString(36).slice(2,9);}
+function low(i){return i.qty<=LOW_QTY||i.weightKg<=LOW_KG;}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+
+function seed(){
+  var n=Date.now(),d=864e5;
+  var r=[
+   ["mild_steel","ASTM A36","rect_plate",2000,1000,10,24,"Ex-stock, mill finish. Reserved for Order #4412.",1,0],
+   ["stainless_steel","SS 304","rect_plate",1250,1250,2,3,"2B finish. Running low — reorder before month end.",1,1],
+   ["aluminum","6061-T6","round_bar",0,150,40,18,"Bar stock, cut to 40mm discs on request.",1,2],
+   ["alloy_steel","EN8","round_bar",0,100,25,40,"",1,5],
+   ["copper","C11000 ETP","sheet",1000,500,1.5,2,"Electrical grade. Very low stock.",1,6],
+   ["mild_steel","IS 2062 E250","rect_plate",3000,1500,20,8,"Heavy plate, forklift required.",1,9],
+   ["brass","C26000","sheet",600,600,3,15,"Decorative grade, bright finish.",1,12],
+   ["stainless_steel","SS 316L","round_bar",0,60,500,12,"Marine grade rod, 500mm lengths.",1,14],
+   ["aluminum","5052-H32","rect_plate",1500,1200,6,1,"Last piece — check before quoting.",1,18],
+   ["mild_steel","EN S355JR","square_plate",800,800,12,30,"Standard fabrication stock.",1,22]
+  ];
+  return r.map(function(x){
+    var m=metal(x[0]),s=shape(x[2]);
+    return {id:uid(),metalId:x[0],grade:x[1],shapeId:x[2],length:x[3],width:x[4],thickness:x[5],
+      qty:x[6],notes:x[7],verified:!!x[8],confidence:null,
+      weightKg:Math.round(weightKg(s.geo,x[3],x[4],x[5],m.density,x[6])*10)/10,
+      photo:null,dateAdded:new Date(n-x[9]*d).toISOString()};
+  });
+}
+
+var KEY="metalstock.v2", inv;
+try{var raw=localStorage.getItem(KEY);inv=raw?JSON.parse(raw):seed();}catch(e){inv=seed();}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(inv));}catch(e){}}
+
+var view="dashboard",detailId=null,query="",fMetal="all",fShape="all",fLow=false,flow=null;
+
+/* ========================= geometry / homography ======================== */
+/* Solve 8x8 linear system by Gaussian elimination with partial pivoting.  */
+function solve8(A,b){
+  var n=8,i,j,k;
+  for(i=0;i<n;i++){
+    var piv=i;
+    for(k=i+1;k<n;k++) if(Math.abs(A[k][i])>Math.abs(A[piv][i])) piv=k;
+    if(Math.abs(A[piv][i])<1e-12) return null;
+    var t=A[i];A[i]=A[piv];A[piv]=t;
+    var tb=b[i];b[i]=b[piv];b[piv]=tb;
+    for(k=i+1;k<n;k++){
+      var f=A[k][i]/A[i][i];
+      if(!f)continue;
+      for(j=i;j<n;j++) A[k][j]-=f*A[i][j];
+      b[k]-=f*b[i];
+    }
+  }
+  var x=new Array(n);
+  for(i=n-1;i>=0;i--){
+    var s=b[i];
+    for(j=i+1;j<n;j++) s-=A[i][j]*x[j];
+    x[i]=s/A[i][i];
+  }
+  return x;
+}
+/* src: 4 image points {x,y} in pixels; dst: 4 world points {x,y} in mm.
+   Returns 3x3 matrix mapping image -> world (flattened, h8 = 1).       */
+function homography(src,dst){
+  var A=[],b=[],i;
+  for(i=0;i<4;i++){
+    var x=src[i].x,y=src[i].y,u=dst[i].x,v=dst[i].y;
+    A.push([x,y,1,0,0,0,-u*x,-u*y]); b.push(u);
+    A.push([0,0,0,x,y,1,-v*x,-v*y]); b.push(v);
+  }
+  var h=solve8(A,b);
+  if(!h) return null;
+  return [h[0],h[1],h[2],h[3],h[4],h[5],h[6],h[7],1];
+}
+function applyH(H,p){
+  var d=H[6]*p.x+H[7]*p.y+H[8];
+  if(Math.abs(d)<1e-12) return null;
+  return {x:(H[0]*p.x+H[1]*p.y+H[2])/d, y:(H[3]*p.x+H[4]*p.y+H[5])/d};
+}
+function dist(a,b){return Math.sqrt((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y));}
+
+/* ========================= image analysis =============================== */
+var IMG=null;              // loaded Image element
+var GRAD=null;             // {w,h,mag:Float32Array} gradient magnitude map
+function buildGradient(img){
+  try{
+    var MAX=900, sc=Math.min(1,MAX/Math.max(img.naturalWidth,img.naturalHeight));
+    var w=Math.round(img.naturalWidth*sc), h=Math.round(img.naturalHeight*sc);
+    var cv=document.createElement("canvas");cv.width=w;cv.height=h;
+    var cx=cv.getContext("2d",{willReadFrequently:true});cx.drawImage(img,0,0,w,h);
+    var d=cx.getImageData(0,0,w,h).data, g=new Float32Array(w*h), i;
+    for(i=0;i<w*h;i++) g[i]=.299*d[i*4]+.587*d[i*4+1]+.114*d[i*4+2];
+    var mag=new Float32Array(w*h),x,y;
+    for(y=1;y<h-1;y++)for(x=1;x<w-1;x++){
+      var o=y*w+x;
+      var gx=-g[o-w-1]-2*g[o-1]-g[o+w-1]+g[o-w+1]+2*g[o+1]+g[o+w+1];
+      var gy=-g[o-w-1]-2*g[o-w]-g[o-w+1]+g[o+w-1]+2*g[o+w]+g[o+w+1];
+      mag[o]=Math.sqrt(gx*gx+gy*gy);
+    }
+    GRAD={w:w,h:h,mag:mag};
+  }catch(e){GRAD=null;}
+}
+/* Snap a normalized point to the strongest nearby edge (sub-window search) */
+function snapToEdge(nx,ny){
+  if(!GRAD) return {x:nx,y:ny};
+  var w=GRAD.w,h=GRAD.h,R=9;
+  var cx=Math.round(nx*w), cy=Math.round(ny*h);
+  var best=-1,bx=cx,by=cy,x,y;
+  for(y=Math.max(1,cy-R);y<Math.min(h-1,cy+R);y++){
+    for(x=Math.max(1,cx-R);x<Math.min(w-1,cx+R);x++){
+      var d=Math.sqrt((x-cx)*(x-cx)+(y-cy)*(y-cy));
+      if(d>R)continue;
+      var score=GRAD.mag[y*w+x]*(1-d/(R*2.2));   // prefer strong AND close
+      if(score>best){best=score;bx=x;by=y;}
+    }
+  }
+  if(best < 40) return {x:nx,y:ny};              // no convincing edge: leave it
+  return {x:bx/w, y:by/h};
+}
+/* rough object bounding box, used only to place the starting quad */
+function autoBox(img){
+  try{
+    var MAX=200, sc=Math.min(1,MAX/Math.max(img.naturalWidth,img.naturalHeight));
+    var w=Math.round(img.naturalWidth*sc),h=Math.round(img.naturalHeight*sc);
+    var cv=document.createElement("canvas");cv.width=w;cv.height=h;
+    var cx=cv.getContext("2d",{willReadFrequently:true});cx.drawImage(img,0,0,w,h);
+    var d=cx.getImageData(0,0,w,h).data,g=new Float32Array(w*h),i;
+    for(i=0;i<w*h;i++)g[i]=.299*d[i*4]+.587*d[i*4+1]+.114*d[i*4+2];
+    var b=[],x,y;
+    for(x=0;x<w;x++){b.push(g[x]);b.push(g[(h-1)*w+x]);}
+    for(y=0;y<h;y++){b.push(g[y*w]);b.push(g[y*w+w-1]);}
+    b.sort(function(p,q){return p-q;});
+    var bg=b[b.length>>1],p10=b[(b.length*.1)|0],p90=b[(b.length*.9)|0];
+    var th=Math.max(18,Math.min(70,(p90-p10)*1.4+16));
+    var xs=[],ys=[],hits=0;
+    for(y=0;y<h;y++)for(x=0;x<w;x++){if(Math.abs(g[y*w+x]-bg)>th){xs.push(x);ys.push(y);hits++;}}
+    if(hits<w*h*.01) return null;
+    xs.sort(function(p,q){return p-q;});ys.sort(function(p,q){return p-q;});
+    var Q=function(a,p){return a[Math.min(a.length-1,Math.max(0,(a.length*p)|0))];};
+    return {x0:Q(xs,.02)/w,x1:Q(xs,.98)/w,y0:Q(ys,.02)/h,y1:Q(ys,.98)/h};
+  }catch(e){return null;}
+}
+
+/* ==================== auto corner detection ============================= */
+/* Convex hull (monotone chain) over a set of points */
+function hull(pts){
+  if(pts.length<4) return pts.slice();
+  var p=pts.slice().sort(function(a,b){return a.x-b.x||a.y-b.y;});
+  var cross=function(o,a,b){return (a.x-o.x)*(b.y-o.y)-(a.y-o.y)*(b.x-o.x);};
+  var lo=[],hi=[],i;
+  for(i=0;i<p.length;i++){
+    while(lo.length>=2&&cross(lo[lo.length-2],lo[lo.length-1],p[i])<=0)lo.pop();
+    lo.push(p[i]);
+  }
+  for(i=p.length-1;i>=0;i--){
+    while(hi.length>=2&&cross(hi[hi.length-2],hi[hi.length-1],p[i])<=0)hi.pop();
+    hi.push(p[i]);
+  }
+  lo.pop();hi.pop();
+  return lo.concat(hi);
+}
+/* Smallest-area enclosing rectangle, via rotating calipers over hull edges.
+   Returns its 4 corners — this is what lets us fit a tilted plate or rule. */
+function minAreaRect(pts){
+  var h=hull(pts);
+  if(h.length<3) return null;
+  var best=null,i;
+  for(i=0;i<h.length;i++){
+    var a=h[i],b=h[(i+1)%h.length];
+    var ang=Math.atan2(b.y-a.y,b.x-a.x);
+    var c=Math.cos(-ang),s=Math.sin(-ang);
+    var x0=1e18,x1=-1e18,y0=1e18,y1=-1e18,j;
+    for(j=0;j<h.length;j++){
+      var rx=h[j].x*c-h[j].y*s, ry=h[j].x*s+h[j].y*c;
+      if(rx<x0)x0=rx; if(rx>x1)x1=rx;
+      if(ry<y0)y0=ry; if(ry>y1)y1=ry;
+    }
+    var area=(x1-x0)*(y1-y0);
+    if(!best||area<best.area) best={area:area,ang:ang,x0:x0,x1:x1,y0:y0,y1:y1};
+  }
+  if(!best) return null;
+  var C=Math.cos(best.ang),S=Math.sin(best.ang);
+  var un=function(x,y){return {x:x*C-y*S, y:x*S+y*C};};
+  return [un(best.x0,best.y0),un(best.x1,best.y0),un(best.x1,best.y1),un(best.x0,best.y1)];
+}
+/* Order 4 corners clockwise starting at the top-left-most */
+function orderQuad(q){
+  var cx=(q[0].x+q[1].x+q[2].x+q[3].x)/4, cy=(q[0].y+q[1].y+q[2].y+q[3].y)/4;
+  var s=q.slice().sort(function(a,b){
+    return Math.atan2(a.y-cy,a.x-cx)-Math.atan2(b.y-cy,b.x-cx);
+  });
+  var bi=0,bv=1e18,i;
+  for(i=0;i<4;i++){var v=s[i].x+s[i].y; if(v<bv){bv=v;bi=i;}}
+  return [s[bi],s[(bi+1)%4],s[(bi+2)%4],s[(bi+3)%4]];
+}
+/* Rotate a quad so that side 0→1 is the LONGER side (matches refW × refH) */
+function longSideFirst(q){
+  var d01=dist(q[0],q[1]), d12=dist(q[1],q[2]);
+  return d12>d01 ? [q[1],q[2],q[3],q[0]] : q;
+}
+/* Connected components over a boolean mask */
+function components(mask,w,h,minPix){
+  var seen=new Uint8Array(w*h),out=[],stack=[],x,y;
+  for(y=0;y<h;y++)for(x=0;x<w;x++){
+    var o=y*w+x;
+    if(!mask[o]||seen[o])continue;
+    stack.length=0;stack.push(o);seen[o]=1;
+    var pix=[];
+    while(stack.length){
+      var c=stack.pop(), cy=(c/w)|0, cx=c-cy*w;
+      pix.push({x:cx,y:cy});
+      if(cx>0   && mask[c-1] && !seen[c-1]){seen[c-1]=1;stack.push(c-1);}
+      if(cx<w-1 && mask[c+1] && !seen[c+1]){seen[c+1]=1;stack.push(c+1);}
+      if(cy>0   && mask[c-w] && !seen[c-w]){seen[c-w]=1;stack.push(c-w);}
+      if(cy<h-1 && mask[c+w] && !seen[c+w]){seen[c+w]=1;stack.push(c+w);}
+    }
+    if(pix.length>=minPix) out.push(pix);
+  }
+  out.sort(function(a,b){return b.length-a.length;});
+  return out;
+}
+/* Detect the plate outline and, if visible, the rule lying on it. */
+function autoDetect(img){
+  var res={obj:null,ref:null,note:""};
+  try{
+    var MAX=300, sc=Math.min(1,MAX/Math.max(img.naturalWidth,img.naturalHeight));
+    var w=Math.round(img.naturalWidth*sc),h=Math.round(img.naturalHeight*sc);
+    var cv=document.createElement("canvas");cv.width=w;cv.height=h;
+    var cx=cv.getContext("2d",{willReadFrequently:true});cx.drawImage(img,0,0,w,h);
+    var d=cx.getImageData(0,0,w,h).data,g=new Float32Array(w*h),i;
+    for(i=0;i<w*h;i++)g[i]=.299*d[i*4]+.587*d[i*4+1]+.114*d[i*4+2];
+
+    /* --- pass 1: piece vs background, judged from the frame of the photo --- */
+    var bd=[],x,y;
+    for(x=0;x<w;x++){bd.push(g[x]);bd.push(g[(h-1)*w+x]);}
+    for(y=0;y<h;y++){bd.push(g[y*w]);bd.push(g[y*w+w-1]);}
+    bd.sort(function(p,q){return p-q;});
+    var bg=bd[bd.length>>1],p10=bd[(bd.length*.1)|0],p90=bd[(bd.length*.9)|0];
+    var th=Math.max(20,Math.min(72,(p90-p10)*1.4+18));
+    var fg=new Uint8Array(w*h);
+    for(i=0;i<w*h;i++) fg[i]=Math.abs(g[i]-bg)>th?1:0;
+
+    var comps=components(fg,w,h,Math.round(w*h*0.012));
+    if(!comps.length) return res;
+    var plate=comps[0];
+    var pq=minAreaRect(plate);
+    if(!pq) return res;
+    res.obj=orderQuad(pq).map(function(p){return {x:Math.max(0,Math.min(1,p.x/w)),y:Math.max(0,Math.min(1,p.y/h))};});
+
+    /* --- pass 2: the rule, as a long thin region inside the piece --------- */
+    var inMask=new Uint8Array(w*h),vals=[];
+    for(i=0;i<plate.length;i++){var o=plate[i].y*w+plate[i].x;inMask[o]=1;vals.push(g[o]);}
+    vals.sort(function(p,q){return p-q;});
+    var med=vals[vals.length>>1];
+    var dev=[];for(i=0;i<vals.length;i+=3)dev.push(Math.abs(vals[i]-med));
+    dev.sort(function(p,q){return p-q;});
+    var mad=dev[dev.length>>1]||6;
+    var th2=Math.max(22,mad*3.2);
+    var rm=new Uint8Array(w*h);
+    for(i=0;i<w*h;i++) rm[i]=(inMask[i]&&Math.abs(g[i]-med)>th2)?1:0;
+
+    var rc=components(rm,w,h,Math.round(plate.length*0.012)),best=null;
+    for(i=0;i<rc.length&&i<8;i++){
+      var q=minAreaRect(rc[i]);if(!q)continue;
+      var a=dist(q[0],q[1]),b=dist(q[1],q[2]);
+      var asp=Math.max(a,b)/Math.max(1,Math.min(a,b));
+      if(asp>=4.5 && rc[i].length<plate.length*0.55){best=q;break;}
+    }
+    /* if the rule sits beside the piece rather than on it, look in pass 1 */
+    if(!best){
+      for(i=1;i<comps.length&&i<6;i++){
+        var q2=minAreaRect(comps[i]);if(!q2)continue;
+        var a2=dist(q2[0],q2[1]),b2=dist(q2[1],q2[2]);
+        if(Math.max(a2,b2)/Math.max(1,Math.min(a2,b2))>=4.5){best=q2;res.note="beside";break;}
+      }
+    }
+    if(best)
+      res.ref=longSideFirst(orderQuad(best)).map(function(p){
+        return {x:Math.max(0,Math.min(1,p.x/w)),y:Math.max(0,Math.min(1,p.y/h))};});
+  }catch(e){}
+  return res;
+}
+
+/* ============================= schematic ================================ */
+function schematic(shapeId,L,W,T){
+  var s=shape(shapeId);L=+L||0;W=+W||0;T=+T||0;
+  var vw=300,vh=200,pad=44,cal="#4FD1C5",mu="#8B92A0",fa="#5B6472";
+  var o='<svg viewBox="0 0 '+vw+' '+vh+'" style="width:100%;height:100%">';
+  o+='<text x="'+(vw/2)+'" y="15" text-anchor="middle" font-size="10" fill="'+fa+'" font-family="monospace">TOP VIEW</text>';
+  if(s.geo==="circle"){
+    var r=(Math.min(vw,vh)-pad*2)/2,cx=vw/2-18,cy=vh/2;
+    o+='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+cal+'" stroke-width="2"/>';
+    o+='<line x1="'+(cx-r)+'" y1="'+cy+'" x2="'+(cx+r)+'" y2="'+cy+'" stroke="'+cal+'" stroke-dasharray="4 3" opacity=".7"/>';
+    o+='<text x="'+cx+'" y="'+(cy+r+20)+'" text-anchor="middle" font-size="12" fill="'+cal+'" font-family="monospace">⌀ '+fmt(W,0)+' mm</text>';
+    o+='<g transform="translate('+(vw-42)+','+(cy-28)+')"><rect width="16" height="56" fill="none" stroke="'+mu+'" stroke-width="1.5"/><text x="8" y="70" text-anchor="middle" font-size="10" fill="'+mu+'" font-family="monospace">'+fmt(T,1)+'</text></g>';
+  }else{
+    var aw=vw-pad*2-16,ah=vh-pad*2,sc=Math.min(aw/(L||1),ah/(W||1));
+    var rw=(L||1)*sc,rh=(W||1)*sc,x0=(vw-rw)/2-8,y0=(vh-rh)/2+8;
+    o+='<rect x="'+x0+'" y="'+y0+'" width="'+rw+'" height="'+rh+'" fill="none" stroke="'+cal+'" stroke-width="2"/>';
+    o+='<line x1="'+x0+'" y1="'+(y0-12)+'" x2="'+(x0+rw)+'" y2="'+(y0-12)+'" stroke="'+mu+'"/>';
+    o+='<text x="'+(x0+rw/2)+'" y="'+(y0-17)+'" text-anchor="middle" font-size="11" fill="'+cal+'" font-family="monospace">'+fmt(L,0)+' mm</text>';
+    o+='<line x1="'+(x0-12)+'" y1="'+y0+'" x2="'+(x0-12)+'" y2="'+(y0+rh)+'" stroke="'+mu+'"/>';
+    o+='<text x="'+(x0-18)+'" y="'+(y0+rh/2)+'" text-anchor="middle" font-size="11" fill="'+cal+'" font-family="monospace" transform="rotate(-90 '+(x0-18)+' '+(y0+rh/2)+')">'+fmt(W,0)+' mm</text>';
+    o+='<g transform="translate('+(vw-34)+','+(vh-40)+')"><rect width="20" height="12" fill="none" stroke="'+mu+'" stroke-width="1.5"/><text x="10" y="26" text-anchor="middle" font-size="10" fill="'+mu+'" font-family="monospace">t='+fmt(T,1)+'</text></g>';
+  }
+  return o+'</svg>';
+}
+function thumb(i,sz){
+  sz=sz||62;
+  if(i.photo) return '<img class="thumb" style="width:'+sz+'px;height:'+sz+'px" src="'+i.photo+'" alt="">';
+  var m=metal(i.metalId);
+  return '<div class="thumb" style="width:'+sz+'px;height:'+sz+'px;background:'+m.tint+'">'+m.short+'</div>';
+}
+function dimText(i){
+  return (i.shapeId==="round_bar"?"⌀"+fmt(i.width,0):fmt(i.length,0)+" × "+fmt(i.width,0))+" × "+fmt(i.thickness,1)+" mm";
+}
+
+/* ============================== add flow ================================ */
+function newFlow(){
+  return {step:"photo",photo:null,imgW:0,imgH:0,
+    stage:"ref",                                   // ref | piece
+    calMode:"rect",                                // rect (tilt-corrected) | span (quick)
+    refId:"rule300", refW:300.0, refH:25.0,
+    refQuad:[{x:.18,y:.70},{x:.72,y:.70},{x:.72,y:.77},{x:.18,y:.77}],
+    /* quick mode: one known span along the length, one along the width */
+    spanA:{a:{x:.20,y:.86},b:{x:.72,y:.86},mm:300},
+    spanB:{a:{x:.12,y:.30},b:{x:.12,y:.62},mm:300},
+    objQuad:[{x:.18,y:.18},{x:.82,y:.18},{x:.82,y:.60},{x:.18,y:.60}],
+    snap:true, tilt:0, quality:"",
+    shapeId:"rect_plate",shapeTouched:false,length:"",width:"",thickness:"",
+    metalId:"mild_steel",grade:"",qty:"1",weightAuto:true,weightKg:"",notes:"",aidx:0};
+}
+var ASTEPS=["Reading image…","Building edge map…","Finding the piece…","Locating the rule…"];
+
+function gotPhoto(url,shotTilt){
+  closeCamera();
+  flow=flow||newFlow();
+  flow.photo=url;flow.step="analyzing";flow.aidx=0;flow.ready=false;
+  flow.shotTilt=(shotTilt==null?null:Math.round(shotTilt*10)/10);
+  flow.auto={obj:false,ref:false};
+  render();
+  var img=new Image();
+  img.onload=function(){
+    IMG=img; flow.imgW=img.naturalWidth; flow.imgH=img.naturalHeight;
+    buildGradient(img);
+    var det=autoDetect(img);
+    if(det.obj){flow.objQuad=det.obj;flow.auto.obj=true;}
+    if(det.ref){flow.refQuad=det.ref;flow.auto.ref=true;flow.autoNote=det.note;}
+    flow.ready=true;
+  };
+  img.onerror=function(){flow.ready=true;};
+  img.src=url;
+  var t=setInterval(function(){
+    if(!flow||flow.step!=="analyzing"){clearInterval(t);return;}
+    flow.aidx++;
+    if(flow.aidx>ASTEPS.length&&flow.ready){
+      clearInterval(t);flow.step="measure";
+      /* land the user on whichever step still needs their eye */
+      flow.stage=flow.auto.ref?"piece":"ref";
+      recompute();
+    }
+    render();
+  },420);
+}
+/* let the user re-run detection after switching modes or nudging things */
+function rerunDetect(){
+  if(!IMG||!flow)return;
+  var det=autoDetect(IMG);
+  if(det.obj){flow.objQuad=det.obj;flow.auto.obj=true;}
+  if(det.ref){flow.refQuad=det.ref;flow.auto.ref=true;}
+  recompute();render();
+}
+
+/* ---- the core measurement -------------------------------------------- */
+/* Mode A "rect": four corners of a known rectangle -> homography.
+   Cancels camera tilt across the whole plane.
+   Mode B "span": two known ruler spans -> a scale for each direction.
+   Simpler to shoot, but assumes the camera was roughly square-on.     */
+function recompute(){
+  if(!flow||!flow.imgW) return;
+  var W=flow.imgW,H=flow.imgH;
+  var px=function(p){return {x:p.x*W,y:p.y*H};};
+
+  if(flow.calMode==="span"){
+    var A=flow.spanA,B=flow.spanB;
+    var pxA=dist(px(A.a),px(A.b)), pxB=dist(px(B.a),px(B.b));
+    if(pxA<5||pxB<5) return;
+    var sA=(+A.mm||0)/pxA, sB=(+B.mm||0)/pxB;      // mm per pixel each way
+    if(!(sA>0)||!(sB>0)) return;
+    var dirA=Math.atan2(px(A.b).y-px(A.a).y, px(A.b).x-px(A.a).x);
+    var dirB=Math.atan2(px(B.b).y-px(B.a).y, px(B.b).x-px(B.a).x);
+    /* scale for an edge = blend of the two reference scales, weighted by how
+       closely that edge runs parallel to each reference direction */
+    var scaleFor=function(ang){
+      var wA=Math.abs(Math.cos(ang-dirA)), wB=Math.abs(Math.cos(ang-dirB));
+      if(wA+wB<1e-6) return (sA+sB)/2;
+      return (sA*wA+sB*wB)/(wA+wB);
+    };
+    var q=flow.objQuad.map(px);
+    var edge=function(p1,p2){
+      var a=Math.atan2(p2.y-p1.y,p2.x-p1.x);
+      return dist(p1,p2)*scaleFor(a);
+    };
+    var Lmm=(edge(q[0],q[1])+edge(q[3],q[2]))/2;
+    var Wmm=(edge(q[0],q[3])+edge(q[1],q[2]))/2;
+    var lo=Math.max(Lmm,Wmm), sh=Math.min(Lmm,Wmm);
+    flow.length=Math.round(lo*10)/10;
+    flow.width =Math.round(sh*10)/10;
+    /* consistency check between the two reference scales */
+    var mism=Math.abs(sA-sB)/Math.max(sA,sB);
+    flow.tilt=Math.round(mism*100);
+    flow.quality = mism>0.12 ? "warn" : "ok";
+    if(!flow.shapeTouched) flow.shapeId=(lo/(sh||1))<1.06?"square_plate":"rect_plate";
+    autoWeight();
+    return;
+  }
+
+  var src=flow.refQuad.map(px);
+  var rw=+flow.refW||0, rh=+flow.refH||0;
+  if(rw<=0||rh<=0) return;
+  var dst=[{x:0,y:0},{x:rw,y:0},{x:rw,y:rh},{x:0,y:rh}];
+  var Hm=homography(src,dst);
+  if(!Hm){flow.quality="bad";return;}
+  flow.H=Hm;
+
+  var qq=flow.objQuad.map(function(p){return applyH(Hm,px(p));});
+  if(qq.indexOf(null)>-1) return;
+
+  var top=dist(qq[0],qq[1]), bottom=dist(qq[3],qq[2]);
+  var left=dist(qq[0],qq[3]), right=dist(qq[1],qq[2]);
+  var L=(top+bottom)/2, Wd=(left+right)/2;
+  var lng=Math.max(L,Wd), shr=Math.min(L,Wd);
+  flow.length=Math.round(lng*10)/10;
+  flow.width=Math.round(shr*10)/10;
+
+  var oppose=Math.max(Math.abs(top-bottom)/Math.max(top,bottom),
+                      Math.abs(left-right)/Math.max(left,right));
+  var s0=dist(src[0],src[1]),s2=dist(src[3],src[2]),s1=dist(src[1],src[2]),s3=dist(src[0],src[3]);
+  flow.tilt=Math.round(Math.max(Math.abs(s0-s2)/Math.max(s0,s2),Math.abs(s1-s3)/Math.max(s1,s3))*100);
+  /* a very thin reference (a rule) makes the short direction ill-conditioned */
+  var aspect=Math.max(rw,rh)/Math.max(1,Math.min(rw,rh));
+  flow.thin = aspect>14;
+  flow.quality = oppose>0.06 ? "warn" : (flow.tilt>35 ? "warn" : "good");
+
+  if(!flow.shapeTouched) flow.shapeId=(lng/(shr||1))<1.06?"square_plate":"rect_plate";
+  autoWeight();
+}
+function autoWeight(){
+  if(!flow||!flow.weightAuto)return;
+  var m=metal(flow.metalId),s=shape(flow.shapeId);
+  flow.weightKg=Math.round(weightKg(s.geo,flow.length,flow.width,flow.thickness,m.density,flow.qty)*10)/10;
+}
+
+/* ================================ views ================================= */
+function flowHeader(t,i){
+  var h='<div class="row" style="padding:14px 0 4px"><button class="back" id="flowBack">'+ic("back",17)+'</button><h1 class="page" style="font-size:21px">'+t+'</h1></div><div class="steps">';
+  for(var k=0;k<4;k++) h+='<i class="'+(k<=i?"on":"")+'"></i>';
+  return h+'</div>';
+}
+
+function screenFlow(){
+  var f=flow,h="";
+
+  if(f.step==="photo"){
+    h+=flowHeader("Capture Material",0);
+    h+='<div class="dropzone">'+ic("camera",36,"#5B6472")+
+       '<div><b style="color:var(--text)">Lay your steel rule on top of the piece</b><br>then shoot straight down from above</div></div>';
+    h+='<div style="margin-top:18px"><button class="btn primary" id="openCam">'+ic("camera",18,"#1A0D05")+'Open Camera</button>';
+    h+='<button class="btn ghost" id="pickFile" style="margin-top:10px">'+ic("upload",18)+'Choose Photo</button>';
+    h+='<button class="btn ghost" id="pickCamFile" style="margin-top:10px;border:none;color:var(--muted);font-size:13px;padding:10px">Use device camera app instead</button></div>';
+    h+='<details open><summary>How to get accurate measurements</summary>'+
+       '<p><b>1. Rest the rule ON the piece,</b> not on the floor beside it. A rule on the ground next to a 20 mm plate reads several mm wrong.<br>'+
+       '<b>2. Keep the whole rule flat and in frame</b> — the app reads its two ends and both edges to work out the scale.<br>'+
+       '<b>3. Shoot from directly above,</b> centred over the piece. The app corrects tilt, but less tilt is still better.<br>'+
+       '<b>4. Even light.</b> Hard shadows blur the edges and make the corners harder to place.<br><br>'+
+       'A bank card also works and is handy for small pieces — every card is exactly 85.6 × 54 mm.</p></details>';
+    return h;
+  }
+
+  if(f.step==="analyzing"){
+    h+=flowHeader("Analyzing",0);
+    h+='<div style="position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:#000">'+
+       '<img src="'+f.photo+'" style="width:100%;max-height:40vh;object-fit:contain;display:block">'+
+       '<div class="scanline" style="top:'+(10+Math.min(f.aidx,4)/4*78)+'%"></div></div><div style="margin-top:18px">';
+    ASTEPS.forEach(function(s,i){
+      h+='<div class="row" style="margin-bottom:11px">'+
+        (i<f.aidx?'<span style="width:20px;height:20px;border-radius:50%;background:var(--goodSoft);display:flex;align-items:center;justify-content:center">'+ic("check",12,"#6EE7A8")+'</span>'
+         :(i===f.aidx?'<span class="spin"></span>':'<span style="width:20px;height:20px;border-radius:50%;background:var(--raised)"></span>'))+
+        '<span style="font-size:13.5px;color:'+(i<=f.aidx?"var(--text)":"var(--faint)")+'">'+s+'</span></div>';
+    });
+    return h+'</div>';
+  }
+
+  if(f.step==="measure"){
+    var s=shape(f.shapeId), isRef=f.stage==="ref";
+    h+=flowHeader("Measure",1);
+
+    /* what the auto-detection managed, so the user knows what to check */
+    var found=(f.auto&&f.auto.obj?1:0)+(f.auto&&f.auto.ref?1:0);
+    if(found===2)
+      h+='<div class="notice" style="background:var(--goodSoft);color:var(--good);margin-bottom:11px">'+ic("check",14,"#6EE7A8")+
+         '<div><b>Rule and piece found automatically.</b> Check both outlines below and nudge any point that sits off an edge.</div></div>';
+    else if(found===1)
+      h+='<div class="notice" style="background:var(--calSoft);color:var(--cal);margin-bottom:11px">'+ic("ruler",14,"#4FD1C5")+
+         '<div><b>'+(f.auto.obj?"Piece":"Rule")+' found automatically.</b> Place the '+(f.auto.obj?"rule":"piece")+' points by hand.</div></div>';
+    else
+      h+='<div class="notice" style="background:var(--warnSoft);color:var(--warn);margin-bottom:11px">'+ic("alert",14,"#FBBF24")+
+         '<div>Couldn\'t pick out the edges automatically — the background may be too similar to the metal. Place the points by hand.</div></div>';
+
+    if(f.shotTilt!=null&&f.shotTilt>4)
+      h+='<div class="notice" style="background:var(--warnSoft);color:var(--warn);margin-bottom:11px">'+ic("alert",14,"#FBBF24")+
+         '<div>This photo was taken at an angle. Rectangle mode still corrects it, but a level shot is always cleaner.</div></div>';
+    else if(f.shotTilt!=null)
+      h+='<div class="notice" style="background:var(--goodSoft);color:var(--good);margin-bottom:11px">'+ic("check",14,"#6EE7A8")+
+         '<div>Shot nicely square-on.</div></div>';
+
+    h+='<div style="display:flex;gap:8px;margin-bottom:11px">'+
+      '<button class="chip'+(isRef?" on orange":"")+'" data-stage="ref" style="flex:1;justify-content:center">1 · The card</button>'+
+      '<button class="chip'+(!isRef?" on":"")+'" data-stage="piece" style="flex:1;justify-content:center">2 · The piece</button></div>';
+
+    h+='<div class="stage" id="stage"><img id="stageImg" src="'+f.photo+'" alt="">'+
+       '<svg id="ov" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none">'+
+       '<polygon id="polyRef" fill="rgba(255,106,26,.14)" stroke="#FF6A1A" stroke-width="1.5"/>'+
+       '<line id="lineA" stroke="#FF6A1A" stroke-width="2" stroke-linecap="round"/>'+
+       '<line id="lineB" stroke="#FFA35C" stroke-width="2" stroke-linecap="round"/>'+
+       '<polygon id="polyObj" fill="rgba(79,209,197,.10)" stroke="#4FD1C5" stroke-width="1.5"/>'+
+       '</svg>';
+    var spanMode=(f.calMode==="span");
+    var labels = !isRef ? ["A","B","C","D"] : (spanMode ? ["L1","L2","W1","W2"] : ["1","2","3","4"]);
+    var col=isRef?"#FF6A1A":"#4FD1C5";
+    for(var i=0;i<4;i++)
+      h+='<div class="handle" data-h="'+i+'"><span class="tick h"></span><span class="tick v"></span>'+
+         '<span class="dot" style="background:'+((isRef&&spanMode&&i>1)?"#FFA35C":col)+'"></span><span class="lbl">'+labels[i]+'</span></div>';
+    h+='<div id="loupe"><canvas width="112" height="112"></canvas><div class="cross"></div></div></div>';
+
+    h+='<p class="hint">'+(!isRef
+      ? 'Drag <b style="color:var(--cal)">A B C D</b> onto the corners of the metal piece, clockwise from top-left.'
+      : (spanMode
+        ? 'Drag <b style="color:var(--hazard)">L1 L2</b> to the two ends of your ruler laid along the <b>length</b>, and <b style="color:#FFA35C">W1 W2</b> along the <b>width</b>.'
+        : 'Drag <b style="color:var(--hazard)">1 2 3 4</b> around the rule: 1 and 2 at each end of the top edge, 3 and 4 at the same marks on the bottom edge. Clockwise.'))+
+      ' A magnifier appears while you drag.</p>';
+
+    h+='<div class="readout"><div><div class="l">Length</div><div class="n">'+fmt(f.length,1)+' <span style="font-size:12px;color:var(--faint)">mm</span></div></div>'+
+       '<div><div class="l">Width</div><div class="n">'+fmt(f.width,1)+' <span style="font-size:12px;color:var(--faint)">mm</span></div></div></div>';
+
+    if(f.quality==="warn")
+      h+='<div class="notice" style="background:var(--warnSoft);color:var(--warn);margin-top:11px">'+ic("alert",14,"#FBBF24")+
+         '<div>'+(spanMode
+           ? 'Your two ruler spans disagree by about '+f.tilt+'%. Check both lengths are set correctly, or retake from directly above.'
+           : 'Corner placement looks uneven, or the shot is steeply angled ('+f.tilt+'% perspective). Re-check your four points.')+'</div></div>';
+    else if((f.quality==="good"||f.quality==="ok")&&+f.length>0)
+      h+='<div class="notice" style="background:var(--goodSoft);color:var(--good);margin-top:11px">'+ic("check",14,"#6EE7A8")+
+         '<div>'+(spanMode?'Both spans agree. Accurate if the shot was square-on.':'Geometry looks consistent — tilt has been corrected. Expect roughly ±1%.')+'</div></div>';
+    if(!spanMode&&f.thin&&isRef)
+      h+='<p class="hint">Tip: a rule is long and thin, so mark the two edge points as far apart as the rule allows — it makes the correction steadier.</p>';
+
+    h+='<div style="display:flex;gap:8px;margin-top:12px">'+
+       '<button class="chip'+(f.snap?" on":"")+'" data-snap="1" style="flex:1;justify-content:center">Edge snap '+(f.snap?"ON":"OFF")+'</button>'+
+       '<button class="chip" id="redetect" style="flex:1;justify-content:center">Auto-detect again</button>'+
+       '<button class="chip" id="retake" style="flex:1;justify-content:center">Retake</button></div>';
+
+    if(isRef){
+      h+='<label class="lab" style="margin-top:18px">How are you measuring?</label>';
+      h+='<div style="display:flex;gap:8px">'+
+        '<button class="chip'+(!spanMode?" on orange":"")+'" data-calmode="rect" style="flex:1;justify-content:center;white-space:normal;text-align:center;padding:11px 8px">Rule as a rectangle<br><span style="font-weight:400;font-size:10.5px;opacity:.8">corrects tilt · best</span></button>'+
+        '<button class="chip'+(spanMode?" on orange":"")+'" data-calmode="span" style="flex:1;justify-content:center;white-space:normal;text-align:center;padding:11px 8px">Rule along each side<br><span style="font-weight:400;font-size:10.5px;opacity:.8">quickest</span></button></div>';
+
+      if(spanMode){
+        h+='<div class="grid2" style="margin-top:12px">'+
+          '<div><label class="lab">Length span (L1→L2)</label><div class="inputwrap"><input type="number" inputmode="decimal" data-f="spanAmm" value="'+f.spanA.mm+'"><span class="suffix">mm</span></div></div>'+
+          '<div><label class="lab">Width span (W1→W2)</label><div class="inputwrap"><input type="number" inputmode="decimal" data-f="spanBmm" value="'+f.spanB.mm+'"><span class="suffix">mm</span></div></div></div>';
+        h+='<div class="scroller" style="margin-top:10px">';
+        SPANS.forEach(function(v){h+='<button class="chip" data-bothspan="'+v+'">Both '+v+' mm</button>';});
+        h+='</div>';
+        h+='<p class="hint">Lay the rule along one edge, shoot, then along the other — or photograph with two rules at once. This mode does <b>not</b> correct camera tilt, so shoot from directly above.</p>';
+      } else {
+        h+='<label class="lab" style="margin-top:16px">Your reference</label><div class="scroller">';
+        REFOBJ.forEach(function(r){h+='<button class="chip'+(f.refId===r.id?" on orange":"")+'" data-ref="'+r.id+'">'+r.name+'</button>';});
+        h+='</div>';
+        h+='<div class="grid2" style="margin-top:10px">'+
+          '<div><label class="lab">'+(refobj(f.refId).rule?"Marked span":"Long side")+'</label><div class="inputwrap"><input type="number" inputmode="decimal" data-f="refW" value="'+f.refW+'"><span class="suffix">mm</span></div></div>'+
+          '<div><label class="lab">'+(refobj(f.refId).rule?"Rule width":"Short side")+'</label><div class="inputwrap"><input type="number" inputmode="decimal" data-f="refH" value="'+f.refH+'"><span class="suffix">mm</span></div></div></div>';
+        if(refobj(f.refId).rule)
+          h+='<p class="hint">Measure your rule\'s width once with a caliper and type it here — most steel rules are 25 or 30 mm. '+esc(refobj(f.refId).note)+'</p>';
+        else if(refobj(f.refId).note)
+          h+='<p class="hint">'+esc(refobj(f.refId).note)+'</p>';
+      }
+      h+='<button class="btn primary" id="toPiece" style="margin-top:16px">Next: outline the piece</button>';
+    } else {
+      h+='<label class="lab" style="margin-top:18px">Shape</label><div class="scroller">';
+      SHAPES.forEach(function(sp){h+='<button class="chip'+(f.shapeId===sp.id?" on orange":"")+'" data-shape="'+sp.id+'">'+sp.name+'</button>';});
+      h+='</div>';
+      h+='<div style="height:180px;background:var(--sunken);border:1px solid var(--line);border-radius:14px;margin-top:14px">'+
+         schematic(f.shapeId,f.length,f.width,f.thickness)+'</div>';
+      h+='<div class="grid2" style="margin-top:14px">';
+      if(s.geo==="circle")
+        h+='<div><label class="lab">Diameter</label><div class="inputwrap accent"><input type="number" inputmode="decimal" data-f="width" value="'+f.width+'"><span class="suffix">mm</span></div></div>';
+      else
+        h+='<div><label class="lab">Length</label><div class="inputwrap accent"><input type="number" inputmode="decimal" data-f="length" value="'+f.length+'"><span class="suffix">mm</span></div></div>'+
+           '<div><label class="lab">Width</label><div class="inputwrap accent"><input type="number" inputmode="decimal" data-f="width" value="'+f.width+'"><span class="suffix">mm</span></div></div>';
+      h+='<div><label class="lab">Thickness</label><div class="inputwrap accent"><input type="number" inputmode="decimal" data-f="thickness" value="'+f.thickness+'"><span class="suffix">mm</span></div></div></div>';
+      h+='<label class="lab" style="margin-top:14px">Quick thickness</label><div style="display:flex;flex-wrap:wrap;gap:6px">';
+      THICKS.forEach(function(t){h+='<button class="chip'+(+f.thickness===t?" on":"")+'" data-thick="'+t+'" style="padding:8px 12px">'+t+'</button>';});
+      h+='</div><p class="hint">A top-down photo cannot see thickness — take it from your caliper or the mill certificate.</p>';
+      var ok=(+f.thickness>0)&&(+f.width>0)&&(s.geo==="circle"||+f.length>0);
+      h+='<button class="btn primary" id="toDetails" style="margin-top:18px"'+(ok?"":" disabled")+'>Confirm measurements</button>';
+    }
+    return h;
+  }
+
+  if(f.step==="details"){
+    var m=metal(f.metalId);
+    h+=flowHeader("Material Details",2);
+    h+='<label class="lab">Metal Type</label><div class="grid3">';
+    METALS.forEach(function(x){h+='<button class="chip'+(f.metalId===x.id?" on orange":"")+'" data-metal="'+x.id+'" style="border-radius:10px;padding:13px 4px;justify-content:center;text-align:center;font-size:11.5px;white-space:normal">'+x.name+'</button>';});
+    h+='</div><label class="lab" style="margin-top:16px">Grade / Quality Standard</label><div class="grid2">';
+    m.grades.forEach(function(g){h+='<button class="chip'+(f.grade===g?" on":"")+'" data-grade="'+g+'" style="border-radius:10px;padding:13px 6px;justify-content:center;font-family:ui-monospace,monospace">'+g+'</button>';});
+    h+='</div><div class="grid2" style="margin-top:16px">'+
+      '<div><label class="lab">Quantity</label><div class="inputwrap"><input type="number" inputmode="numeric" data-f="qty" value="'+f.qty+'"><span class="suffix">pcs</span></div></div>'+
+      '<div><div style="display:flex;justify-content:space-between;align-items:center"><label class="lab">Weight</label>'+
+      '<button id="wauto" style="background:none;border:none;font-size:10px;font-weight:700;color:'+(f.weightAuto?"var(--cal)":"var(--faint)")+';cursor:pointer;font-family:inherit;margin-bottom:6px">AUTO</button></div>'+
+      '<div class="inputwrap"><input type="number" inputmode="decimal" data-f="weightKg" value="'+f.weightKg+'"'+(f.weightAuto?" disabled":"")+' style="color:'+(f.weightAuto?"var(--muted)":"var(--text)")+'"><span class="suffix">kg</span></div></div></div>';
+    h+='<label class="lab" style="margin-top:16px">Notes (optional)</label><textarea data-f="notes" rows="3" class="card" style="padding:11px 13px;width:100%" placeholder="e.g. reserved for order, finish, rack number…">'+esc(f.notes)+'</textarea>';
+    h+='<button class="btn primary" id="toReview" style="margin-top:18px"'+((f.grade&&+f.qty>0)?"":" disabled")+'>Review &amp; save</button>';
+    return h;
+  }
+
+  if(f.step==="review"){
+    var mm=metal(f.metalId),ss=shape(f.shapeId);
+    h+=flowHeader("Review Stock Entry",3);
+    h+=f.photo?'<img src="'+f.photo+'" style="width:100%;max-height:210px;object-fit:cover;border-radius:14px;border:1px solid var(--line)">':'';
+    h+='<div style="height:175px;background:var(--sunken);border:1px solid var(--line);border-radius:14px;margin-top:12px">'+schematic(f.shapeId,f.length,f.width,f.thickness)+'</div>';
+    var rows=[["Metal Type",mm.name],["Grade / Standard",f.grade],["Shape",ss.name],
+      [ss.geo==="circle"?"Diameter":"Length × Width", ss.geo==="circle"?fmt(f.width,0)+" mm":fmt(f.length,0)+" × "+fmt(f.width,0)+" mm"],
+      ["Thickness",fmt(f.thickness,1)+" mm"],["Quantity",f.qty+" pcs"],["Weight",fmt(f.weightKg,1)+" kg"]];
+    h+='<div class="card divide" style="margin-top:14px">';
+    rows.forEach(function(r){h+='<div class="kv"><span>'+r[0]+'</span><span>'+esc(r[1])+'</span></div>';});
+    if(f.notes)h+='<div class="kv"><span style="font-family:inherit">'+esc(f.notes)+'</span></div>';
+    h+='</div><div class="row" style="margin-top:12px;font-size:12px;color:var(--faint)">'+ic("shield",14,"#6EE7A8")+
+       '<span>Marked as manually verified — measurements were reviewed before saving.</span></div>';
+    h+='<div style="display:flex;gap:10px;margin-top:18px"><button class="btn ghost" id="backMeasure" style="width:40%">Edit</button><button class="btn primary" id="saveStock">Save to stock</button></div>';
+    return h;
+  }
+
+  if(f.step==="success"){
+    h+='<div class="center" style="min-height:65vh;padding:0 20px"><div style="width:66px;height:66px;border-radius:50%;background:var(--goodSoft);display:flex;align-items:center;justify-content:center;margin-bottom:18px">'+ic("check",30,"#6EE7A8")+'</div>';
+    h+='<h1 class="page">Added to stock</h1><p style="font-size:14px;color:var(--muted);margin:8px 0 28px">Photo, measurements, and schematic saved to your inventory.</p>';
+    h+='<button class="btn primary" id="doneFlow">Back to inventory</button></div>';
+    return h;
+  }
+  return h;
+}
+
+/* ------------------------- stage painting / drag ------------------------ */
+/* the four draggable points currently on screen (object refs, mutated in place) */
+function activePts(){
+  if(flow.stage!=="ref") return flow.objQuad;
+  if(flow.calMode==="span") return [flow.spanA.a,flow.spanA.b,flow.spanB.a,flow.spanB.b];
+  return flow.refQuad;
+}
+function paintStage(){
+  var st=document.getElementById("stage");if(!st||!flow)return;
+  var W=st.clientWidth,H=st.clientHeight;
+  function pts(q){return q.map(function(p){return (p.x*W)+","+(p.y*H);}).join(" ");}
+  var pr=document.getElementById("polyRef"),po=document.getElementById("polyObj"),
+      la=document.getElementById("lineA"),lb=document.getElementById("lineB");
+  var spanMode=(flow.calMode==="span");
+  if(pr){
+    pr.style.display=spanMode?"none":"";
+    if(!spanMode){pr.setAttribute("points",pts(flow.refQuad));pr.setAttribute("opacity",flow.stage==="ref"?1:.45);}
+  }
+  if(la&&lb){
+    la.style.display=spanMode?"":"none"; lb.style.display=spanMode?"":"none";
+    if(spanMode){
+      var op=flow.stage==="ref"?1:.45;
+      la.setAttribute("x1",flow.spanA.a.x*W);la.setAttribute("y1",flow.spanA.a.y*H);
+      la.setAttribute("x2",flow.spanA.b.x*W);la.setAttribute("y2",flow.spanA.b.y*H);la.setAttribute("opacity",op);
+      lb.setAttribute("x1",flow.spanB.a.x*W);lb.setAttribute("y1",flow.spanB.a.y*H);
+      lb.setAttribute("x2",flow.spanB.b.x*W);lb.setAttribute("y2",flow.spanB.b.y*H);lb.setAttribute("opacity",op);
+    }
+  }
+  if(po){po.setAttribute("points",pts(flow.objQuad));po.setAttribute("opacity",flow.stage==="ref"?.45:1);}
+  var q=activePts(),hs=st.querySelectorAll(".handle");
+  for(var i=0;i<hs.length&&i<q.length;i++){
+    hs[i].style.left=(q[i].x*100)+"%";
+    hs[i].style.top=(q[i].y*100)+"%";
+  }
+}
+function showLoupe(nx,ny,stRect){
+  var lp=document.getElementById("loupe");if(!lp||!IMG)return;
+  var cv=lp.querySelector("canvas"),cx=cv.getContext("2d");
+  var Z=4.5,S=112/Z;
+  var sx=nx*IMG.naturalWidth-S/2, sy=ny*IMG.naturalHeight-S/2;
+  cx.fillStyle="#000";cx.fillRect(0,0,112,112);
+  try{cx.drawImage(IMG,sx,sy,S,S,0,0,112,112);}catch(e){}
+  lp.style.display="block";
+  var px=nx*stRect.width, py=ny*stRect.height;
+  lp.style.left=Math.max(6,Math.min(stRect.width-118,px-56))+"px";
+  lp.style.top =(py>150? py-140 : py+40)+"px";
+}
+function hideLoupe(){var lp=document.getElementById("loupe");if(lp)lp.style.display="none";}
+
+function wireStage(){
+  var st=document.getElementById("stage");if(!st)return;
+  var img=document.getElementById("stageImg");
+  if(img&&!img.complete) img.onload=paintStage;
+  paintStage();
+  var drag=null;
+  st.addEventListener("pointerdown",function(e){
+    var t=e.target.closest(".handle");if(!t)return;
+    drag=+t.getAttribute("data-h");
+    t.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  st.addEventListener("pointermove",function(e){
+    if(drag===null)return;e.preventDefault();
+    var r=st.getBoundingClientRect();
+    var x=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));
+    var y=Math.max(0,Math.min(1,(e.clientY-r.top)/r.height));
+    var p=activePts()[drag]; p.x=x; p.y=y;
+    paintStage();
+    showLoupe(x,y,r);
+    recompute();
+    liveNumbers();
+  });
+  function up(){
+    if(drag===null)return;
+    if(flow.snap){
+      var p=activePts()[drag], s=snapToEdge(p.x,p.y);
+      p.x=s.x; p.y=s.y;
+    }
+    drag=null;hideLoupe();recompute();render();
+  }
+  st.addEventListener("pointerup",up);
+  st.addEventListener("pointercancel",up);
+}
+function liveNumbers(){
+  var r=document.querySelectorAll(".readout .n");
+  if(r.length===2){
+    r[0].innerHTML=fmt(flow.length,1)+' <span style="font-size:12px;color:var(--faint)">mm</span>';
+    r[1].innerHTML=fmt(flow.width,1)+' <span style="font-size:12px;color:var(--faint)">mm</span>';
+  }
+  var li=document.querySelector('[data-f="length"]'),wi=document.querySelector('[data-f="width"]');
+  if(li)li.value=flow.length; if(wi)wi.value=flow.width;
+}
+
+/* =============================== screens ================================ */
+function screenDashboard(){
+  var pieces=inv.reduce(function(a,b){return a+ +b.qty;},0);
+  var kg=inv.reduce(function(a,b){return a+ +b.weightKg;},0);
+  var lows=inv.filter(low);
+  var recent=inv.slice().sort(function(a,b){return new Date(b.dateAdded)-new Date(a.dateAdded);}).slice(0,3);
+  var by={};inv.forEach(function(i){by[i.metalId]=(by[i.metalId]||0)+i.weightKg;});
+  var max=1;for(var k in by)max=Math.max(max,by[k]);
+
+  var h='<p class="eyebrow">Overview</p><h1 class="page">Yard Dashboard</h1>';
+  h+='<button class="card" data-go="inventory" style="width:100%;display:flex;gap:9px;align-items:center;padding:14px;margin:16px 0 14px;color:var(--faint);font-size:14px;font-family:inherit;cursor:pointer">'+ic("search",17,"#5B6472")+'Search grade, dimensions, type…</button>';
+  h+='<div class="grid2"><div class="card" style="padding:15px"><div class="row" style="gap:6px;margin-bottom:8px">'+ic("box",14,"#4FD1C5")+'<span style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--faint);text-transform:uppercase">Stock Items</span></div><div style="font-size:28px;font-weight:800">'+inv.length+'</div><div class="mono" style="font-size:11px;color:var(--muted);margin-top:3px">'+pieces+' pieces total</div></div>';
+  h+='<div class="card" style="padding:15px"><div class="row" style="gap:6px;margin-bottom:8px">'+ic("trend",14,"#6EE7A8")+'<span style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--faint);text-transform:uppercase">Total Weight</span></div><div style="font-size:28px;font-weight:800">'+fmt(kg,0)+'</div><div class="mono" style="font-size:11px;color:var(--muted);margin-top:3px">kilograms in stock</div></div></div>';
+
+  if(lows.length){
+    h+='<div style="background:var(--warnSoft);border:1px solid #FBBF2444;border-radius:14px;padding:15px;margin-top:14px"><div class="row" style="gap:8px;margin-bottom:10px">'+ic("alert",16,"#FBBF24")+'<b style="font-size:13.5px;color:var(--warn)">'+lows.length+' item'+(lows.length>1?"s":"")+' running low</b></div>';
+    lows.slice(0,3).forEach(function(i){
+      h+='<button data-item="'+i.id+'" style="width:100%;display:flex;justify-content:space-between;background:none;border:none;color:var(--text);font-size:13px;padding:5px 0;font-family:inherit;cursor:pointer"><span>'+esc(metal(i.metalId).name)+' · '+esc(i.grade)+'</span><span class="mono" style="color:var(--warn)">'+i.qty+' pcs</span></button>';
+    });
+    h+='</div>';
+  }
+  h+='<div class="card" style="padding:15px;margin-top:14px"><b style="font-size:13.5px">Stock by Material Type</b><div style="margin-top:12px">';
+  METALS.forEach(function(m){
+    if(!by[m.id])return;
+    h+='<div style="margin-bottom:11px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span style="color:var(--muted)">'+m.name+'</span><span class="mono" style="color:var(--cal)">'+fmt(by[m.id],0)+' kg</span></div><div class="bar"><i style="width:'+(by[m.id]/max*100)+'%"></i></div></div>';
+  });
+  h+='</div></div><div style="display:flex;justify-content:space-between;align-items:center;margin:20px 0 10px"><b style="font-size:13.5px">Recently Added</b><button data-go="inventory" style="background:none;border:none;color:var(--cal);font-size:12.5px;font-weight:700;font-family:inherit;cursor:pointer">View all ›</button></div>';
+  recent.forEach(function(i){
+    h+='<button class="listitem" data-item="'+i.id+'">'+thumb(i,52)+'<div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(metal(i.metalId).name)+' · '+esc(i.grade)+'</div><div class="mono" style="font-size:11.5px;color:var(--muted);margin-top:3px">'+dimText(i)+'</div></div><span style="font-size:10.5px;color:var(--faint)">'+ago(i.dateAdded)+'</span></button>';
+  });
+  return h;
+}
+
+function screenInventory(){
+  var list=inv.filter(function(i){
+    if(fMetal!=="all"&&i.metalId!==fMetal)return false;
+    if(fShape!=="all"&&i.shapeId!==fShape)return false;
+    if(fLow&&!low(i))return false;
+    if(!query.trim())return true;
+    var q=query.toLowerCase();
+    return (metal(i.metalId).name+" "+i.grade+" "+shape(i.shapeId).name+" "+i.length+" "+i.width+" "+i.thickness+" "+(i.notes||"")).toLowerCase().indexOf(q)>-1;
+  }).sort(function(a,b){return new Date(b.dateAdded)-new Date(a.dateAdded);});
+
+  var h='<p class="eyebrow">'+inv.length+' items</p><h1 class="page">Inventory</h1>';
+  h+='<div class="card row" style="padding:13px 14px;margin:16px 0 12px">'+ic("search",17,"#5B6472")+
+     '<input id="q" placeholder="Search grade, dimensions, type…" value="'+esc(query)+'" style="font-family:inherit;font-size:14.5px;padding:0">'+
+     (query?'<button id="qclear" style="background:none;border:none;cursor:pointer">'+ic("x",15,"#5B6472")+'</button>':'')+'</div>';
+  h+='<div class="scroller"><button class="chip'+(fMetal==="all"?" on":"")+'" data-fm="all">All Types</button>';
+  METALS.forEach(function(m){h+='<button class="chip'+(fMetal===m.id?" on":"")+'" data-fm="'+m.id+'">'+m.name+'</button>';});
+  h+='</div><div class="scroller" style="margin-top:8px"><button class="chip'+(fShape==="all"?" on":"")+'" data-fs="all">All Shapes</button>';
+  SHAPES.forEach(function(s){h+='<button class="chip'+(fShape===s.id?" on":"")+'" data-fs="'+s.id+'">'+s.name+'</button>';});
+  h+='<button class="chip'+(fLow?" on":"")+'" data-flow="1" style="'+(fLow?"background:var(--warnSoft);color:var(--warn);border-color:#FBBF2455":"")+'">Low stock</button></div><div style="margin-top:16px">';
+  if(!list.length)h+='<div style="text-align:center;padding:56px 0;color:var(--faint)"><div style="font-size:14px;font-weight:700;color:var(--muted)">No matching stock</div><div style="font-size:12.5px;margin-top:5px">Try a different search or clear filters.</div></div>';
+  list.forEach(function(i){
+    h+='<button class="listitem" data-item="'+i.id+'">'+thumb(i)+'<div style="flex:1;min-width:0"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><b style="font-size:13.5px">'+esc(metal(i.metalId).name)+'</b>'+(low(i)?'<span class="badge bad">Low</span>':'')+'</div><div style="font-size:12px;color:var(--muted);margin-top:2px">'+esc(i.grade)+' · '+shape(i.shapeId).name+'</div><div class="mono" style="font-size:12px;color:var(--cal);margin-top:4px">'+dimText(i)+'</div></div><div style="text-align:right"><div style="font-size:13px;font-weight:700">'+i.qty+' pcs</div><div class="mono" style="font-size:11px;color:var(--muted);margin-top:3px">'+fmt(i.weightKg,0)+' kg</div></div></button>';
+  });
+  return h+'</div>';
+}
+
+function screenMore(){
+  var soon=[["Barcode / QR scanning","Scan tags to pull up stock instantly"],
+            ["Customer & order records","Track buyers and reserved stock"],
+            ["Cloud sync","Access your yard from any device"],
+            ["Export to Excel / PDF","Share stock lists with your team"]];
+  var h='<p class="eyebrow">Settings</p><h1 class="page">More</h1>';
+  h+='<div class="card" style="padding:15px;margin-top:16px"><b style="font-size:14px">MetalStock AI</b><div style="font-size:12px;color:var(--faint);margin-top:4px">Offline build · '+inv.length+' items saved on this device</div></div>';
+  h+='<details style="margin-top:14px"><summary>How the measurement works</summary><p>The app builds a perspective transform (a homography) from the four corners of your reference rectangle. That maps every point in the photo onto a flat real-world plane in millimetres, which cancels out camera tilt — the single largest source of error in photo measurement.<br><br>Accuracy depends on how precisely you place the corners and how flat the piece sits. With a bank card resting on the piece and a reasonably square shot, expect around ±1%. It is a fast estimate for stock records, not a substitute for a caliper on a machined tolerance.</p></details>';
+  h+='<b style="display:block;font-size:13.5px;margin:20px 0 10px">Coming soon</b><div class="card divide">';
+  soon.forEach(function(s){h+='<div style="display:flex;gap:12px;align-items:center;padding:14px 15px;opacity:.6"><div style="flex:1"><div style="font-size:13px;font-weight:700">'+s[0]+'</div><div style="font-size:11.5px;color:var(--faint);margin-top:2px">'+s[1]+'</div></div><span class="badge">Soon</span></div>';});
+  h+='</div><button class="btn ghost" id="reset" style="margin-top:20px;font-size:13.5px;padding:13px">Reset to demo data</button>';
+  return h;
+}
+
+function screenDetail(){
+  var i=null;inv.forEach(function(x){if(x.id===detailId)i=x;});
+  if(!i){view="inventory";return screenInventory();}
+  var m=metal(i.metalId),s=shape(i.shapeId),ed=!!i._editing;
+  var h='<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0 8px"><button class="back" data-go="inventory">'+ic("back",17)+'</button><button id="toggleEdit" class="chip'+(ed?" on orange":"")+'">'+(ed?"Save":"Edit")+'</button></div>';
+  h+=i.photo?'<img src="'+i.photo+'" style="width:100%;max-height:230px;object-fit:cover;border-radius:14px;border:1px solid var(--line)">'
+    :'<div style="width:100%;height:150px;border-radius:14px;background:'+m.tint+';display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:800;color:rgba(17,20,26,.55)">'+m.short+'</div>';
+  h+='<div style="height:190px;background:var(--sunken);border:1px solid var(--line);border-radius:14px;margin-top:12px">'+schematic(i.shapeId,i.length,i.width,i.thickness)+'</div>';
+  h+='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:16px"><h1 class="page" style="font-size:22px">'+esc(m.name)+'</h1>'+(low(i)?'<span class="badge bad">Low stock</span>':'')+'</div>';
+  h+='<div class="mono" style="font-size:13px;color:var(--cal);margin-top:4px">'+esc(i.grade)+' · '+s.name+'</div>';
+  function row(l,f,sfx){
+    if(!ed)return '<div class="kv"><span>'+l+'</span><span>'+fmt(i[f],1)+' '+sfx+'</span></div>';
+    return '<div class="kv"><span>'+l+'</span><span><input type="number" inputmode="decimal" data-edit="'+f+'" value="'+i[f]+'" style="width:82px;text-align:right;color:var(--cal);border-bottom:1px solid var(--cal);padding:2px 0;font-size:14px"> '+sfx+'</span></div>';
+  }
+  h+='<div class="card divide" style="margin-top:14px">';
+  if(s.geo==="circle")h+=row("Diameter","width","mm");
+  else{h+=row("Length","length","mm");h+=row("Width","width","mm");}
+  h+=row("Thickness","thickness","mm")+row("Quantity","qty","pcs");
+  h+='<div class="kv"><span>Weight</span><span>'+fmt(i.weightKg,1)+' kg</span></div>';
+  h+='<div class="kv"><span>Added</span><span style="font-family:inherit;font-weight:400">'+ago(i.dateAdded)+'</span></div></div>';
+  h+='<label class="lab" style="margin-top:16px">Notes</label>';
+  h+=ed?'<textarea data-edit="notes" rows="3" class="card" style="padding:11px 13px;width:100%">'+esc(i.notes)+'</textarea>'
+       :'<div class="card" style="padding:12px 14px;font-size:13.5px;color:'+(i.notes?"var(--text)":"var(--faint)")+'">'+(esc(i.notes)||"No notes added.")+'</div>';
+  return h;
+}
+
+/* =============================== render ================================= */
+function render(){
+  var main=document.getElementById("main"),nav=document.getElementById("nav");
+  var keep=main.scrollTop;
+  if(flow)main.innerHTML=screenFlow();
+  else if(view==="detail")main.innerHTML=screenDetail();
+  else if(view==="inventory")main.innerHTML=screenInventory();
+  else if(view==="more")main.innerHTML=screenMore();
+  else main.innerHTML=screenDashboard();
+
+  nav.style.display=(flow||view==="detail")?"none":"flex";
+  nav.innerHTML=
+    '<button class="'+(view==="dashboard"?"on":"")+'" data-go="dashboard">'+ic("home",20,view==="dashboard"?"#FF6A1A":"#5B6472")+'Dashboard</button>'+
+    '<button class="'+(view==="inventory"?"on":"")+'" data-go="inventory">'+ic("box",20,view==="inventory"?"#FF6A1A":"#5B6472")+'Inventory</button>'+
+    '<button data-add="1"><span class="fab">'+ic("plus",24,"#1A0D05")+'</span></button>'+
+    '<button class="'+(view==="more"?"on":"")+'" data-go="more">'+ic("gear",20,view==="more"?"#FF6A1A":"#5B6472")+'More</button>';
+
+  if(flow&&flow.step==="measure"){wireStage();main.scrollTop=keep;}
+  else if(view==="inventory")main.scrollTop=keep;
+}
+
+/* =========================== spirit level =============================== */
+/* Phone held over the piece with the screen facing you means the rear camera
+   points straight down, which is beta = gamma = 0. The bubble drifts off the
+   fixed crosshair by exactly that error, so centring it means shooting at 90°. */
+var LEVEL={live:false,tilt:null,beta:0,gamma:0};
+function normAngle(a){
+  a=a||0;
+  if(a>90) return 180-a;
+  if(a<-90) return -180-a;
+  return a;
+}
+function paintLevel(){
+  var box=document.getElementById("level"),bub=document.getElementById("bubble");
+  if(!box||!LEVEL.live)return;
+  box.style.display="block";
+  var b=normAngle(LEVEL.beta), g=normAngle(LEVEL.gamma);
+  var tilt=Math.sqrt(b*b+g*g);
+  LEVEL.tilt=tilt;
+  var PXPERDEG=4.2, R=58;
+  var dx=Math.max(-R,Math.min(R,g*PXPERDEG));
+  var dy=Math.max(-R,Math.min(R,b*PXPERDEG));
+  bub.style.transform="translate("+dx+"px,"+dy+"px)";
+  /* the whole target turns green when the bubble sits on the crosshair */
+  box.className = tilt<2.5 ? "ok" : "";
+}
+function startLevel(){
+  function handler(e){
+    if(e.beta==null&&e.gamma==null)return;
+    LEVEL.live=true; LEVEL.beta=e.beta||0; LEVEL.gamma=e.gamma||0;
+    paintLevel();
+  }
+  try{
+    if(window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==="function"){
+      /* iOS 13+ needs an explicit grant, triggered by this button tap */
+      DeviceOrientationEvent.requestPermission().then(function(r){
+        if(r==="granted") window.addEventListener("deviceorientation",handler,true);
+      }).catch(function(){});
+    } else if(window.DeviceOrientationEvent){
+      window.addEventListener("deviceorientation",handler,true);
+    }
+  }catch(e){}
+}
+
+/* =============================== camera ================================= */
+var stream=null,facing="environment";
+function camFail(msg){
+  var e=document.getElementById("camErr");
+  document.getElementById("camErrText").textContent=msg;
+  e.style.display="flex";
+  document.getElementById("camHint").style.display="none";
+}
+function openCamera(){
+  var b=document.getElementById("cam"),v=document.getElementById("camVideo"),
+      e=document.getElementById("camErr"),s=document.getElementById("camShot"),
+      hint=document.getElementById("camHint");
+  b.style.display="block";           // controls are absolutely placed inside
+  e.style.display="none";
+  hint.style.display="block";
+  s.disabled=true;                   // stays greyed until the stream is live
+  startLevel();                      // ask for motion access on this same tap
+
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+    camFail("This browser can't open the camera here.");return;
+  }
+  navigator.mediaDevices.getUserMedia({
+    video:{facingMode:{ideal:facing},width:{ideal:2560},height:{ideal:1920}},audio:false
+  }).then(function(st){
+    stream=st; v.srcObject=st;
+    /* enable the shutter as soon as real frames exist, via several signals —
+       some mobile browsers fire only one of these */
+    var arm=function(){ if(v.videoWidth) s.disabled=false; };
+    v.onloadedmetadata=arm; v.onloadeddata=arm; v.onplaying=arm;
+    v.play().then(arm).catch(function(){arm();});
+    setTimeout(arm,700); setTimeout(arm,1800);   // belt and braces
+  }).catch(function(err){
+    var m="Camera permission was denied or unavailable.";
+    if(err&&err.name==="NotAllowedError") m="Camera access was blocked. Allow camera permission for this site in your browser settings.";
+    if(err&&err.name==="NotFoundError")  m="No camera was found on this device.";
+    if(err&&err.name==="NotReadableError") m="The camera is being used by another app. Close it and try again.";
+    camFail(m);
+  });
+}
+function closeCamera(){
+  if(stream){stream.getTracks().forEach(function(t){t.stop();});stream=null;}
+  document.getElementById("cam").style.display="none";
+}
+document.getElementById("camClose").onclick=closeCamera;
+document.getElementById("camFlip").onclick=function(){
+  facing=facing==="environment"?"user":"environment";
+  if(stream){stream.getTracks().forEach(function(t){t.stop();});stream=null;}
+  openCamera();
+};
+document.getElementById("camErrPick").onclick=function(){
+  closeCamera();
+  document.getElementById("filePick").click();
+};
+document.getElementById("camShot").onclick=function(){
+  var v=document.getElementById("camVideo");if(!v.videoWidth)return;
+  var cv=document.createElement("canvas");
+  var sc=Math.min(1,2200/Math.max(v.videoWidth,v.videoHeight));  // keep detail for accuracy
+  cv.width=v.videoWidth*sc;cv.height=v.videoHeight*sc;
+  cv.getContext("2d").drawImage(v,0,0,cv.width,cv.height);
+  var shotTilt = LEVEL.live ? LEVEL.tilt : null;
+  gotPhoto(cv.toDataURL("image/jpeg",.92), shotTilt);
+};
+function wireFile(el){
+  el.addEventListener("change",function(){
+    var f=el.files&&el.files[0];el.value="";if(!f)return;
+    var r=new FileReader();r.onload=function(){gotPhoto(r.result);};r.readAsDataURL(f);
+  });
+}
+wireFile(document.getElementById("filePick"));
+wireFile(document.getElementById("filePickCam"));
+
+/* =============================== events ================================= */
+document.getElementById("main").addEventListener("click",function(e){
+  var t=e.target.closest("button");if(!t)return;var g;
+  if((g=t.getAttribute("data-go"))){flow=null;view=g;detailId=null;render();return;}
+  if(t.getAttribute("data-item")){detailId=t.getAttribute("data-item");view="detail";render();return;}
+  if(t.id==="qclear"){query="";render();return;}
+  if((g=t.getAttribute("data-fm"))){fMetal=(fMetal===g?"all":g);render();return;}
+  if((g=t.getAttribute("data-fs"))){fShape=(fShape===g?"all":g);render();return;}
+  if(t.getAttribute("data-flow")){fLow=!fLow;render();return;}
+  if(t.id==="reset"){inv=seed();persist();render();return;}
+  if(t.id==="toggleEdit"){
+    var it=null;inv.forEach(function(x){if(x.id===detailId)it=x;});
+    if(it._editing){var m=metal(it.metalId),s=shape(it.shapeId);
+      it.weightKg=Math.round(weightKg(s.geo,it.length,it.width,it.thickness,m.density,it.qty)*10)/10;
+      it._editing=false;persist();}
+    else it._editing=true;
+    render();return;
+  }
+  if(t.id==="openCam"){openCamera();return;}
+  if(t.id==="pickFile"){document.getElementById("filePick").click();return;}
+  if(t.id==="pickCamFile"){document.getElementById("filePickCam").click();return;}
+  if(t.id==="flowBack"){flow=null;view="inventory";render();return;}
+  if(t.id==="redetect"){rerunDetect();return;}
+  if(t.id==="retake"){flow=newFlow();render();return;}
+  if((g=t.getAttribute("data-stage"))){flow.stage=g;render();return;}
+  if(t.getAttribute("data-snap")){flow.snap=!flow.snap;render();return;}
+  if((g=t.getAttribute("data-calmode"))){flow.calMode=g;recompute();render();return;}
+  if((g=t.getAttribute("data-bothspan"))){
+    flow.spanA.mm=+g; flow.spanB.mm=+g; recompute(); render(); return;
+  }
+  if((g=t.getAttribute("data-ref"))){
+    var r=refobj(g);flow.refId=g;flow.refW=r.w;flow.refH=r.h;
+    recompute();render();return;
+  }
+  if(t.id==="toPiece"){flow.stage="piece";render();return;}
+  if((g=t.getAttribute("data-shape"))){flow.shapeId=g;flow.shapeTouched=true;autoWeight();render();return;}
+  if((g=t.getAttribute("data-thick"))){flow.thickness=+g;autoWeight();render();return;}
+  if((g=t.getAttribute("data-metal"))){flow.metalId=g;flow.grade="";autoWeight();render();return;}
+  if((g=t.getAttribute("data-grade"))){flow.grade=g;render();return;}
+  if(t.id==="wauto"){flow.weightAuto=!flow.weightAuto;autoWeight();render();return;}
+  if(t.id==="toDetails"){flow.step="details";render();return;}
+  if(t.id==="toReview"){flow.step="review";render();return;}
+  if(t.id==="backMeasure"){flow.step="measure";render();return;}
+  if(t.id==="saveStock"){
+    var mt=metal(flow.metalId);
+    inv.unshift({id:uid(),metalId:flow.metalId,grade:flow.grade||mt.grades[0],shapeId:flow.shapeId,
+      length:+flow.length||0,width:+flow.width||0,thickness:+flow.thickness||0,qty:+flow.qty||1,
+      weightKg:+flow.weightKg||0,notes:flow.notes,verified:true,confidence:null,
+      photo:flow.photo,dateAdded:new Date().toISOString()});
+    persist();flow.step="success";render();return;
+  }
+  if(t.id==="doneFlow"){flow=null;view="inventory";render();return;}
+});
+
+document.getElementById("nav").addEventListener("click",function(e){
+  var t=e.target.closest("button");if(!t)return;
+  if(t.getAttribute("data-add")){flow=newFlow();render();return;}
+  var g=t.getAttribute("data-go");
+  if(g){flow=null;detailId=null;view=g;document.getElementById("main").scrollTop=0;render();}
+});
+
+document.getElementById("main").addEventListener("input",function(e){
+  var el=e.target,f;
+  if(el.id==="q"){
+    query=el.value;clearTimeout(window._qt);
+    window._qt=setTimeout(function(){
+      var p=el.selectionStart;render();
+      var n=document.getElementById("q");if(n){n.focus();n.setSelectionRange(p,p);}
+    },220);
+    return;
+  }
+  if((f=el.getAttribute("data-f"))&&flow){
+    if(f==="spanAmm"){flow.spanA.mm=el.value;recompute();liveNumbers();return;}
+    if(f==="spanBmm"){flow.spanB.mm=el.value;recompute();liveNumbers();return;}
+    flow[f]=el.value;
+    if(f==="refW"||f==="refH")recompute();
+    if(f==="weightKg")flow.weightAuto=false;
+    autoWeight();
+    if(f==="refW"||f==="refH")liveNumbers();
+    return;
+  }
+  if((f=el.getAttribute("data-edit"))&&detailId){
+    inv.forEach(function(x){if(x.id===detailId)x[f]=el.value;});
+    return;
+  }
+});
+
+function clock(){
+  var d=new Date();
+  document.getElementById("clock").textContent=String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");
+}
+clock();setInterval(clock,20000);
+render();
+</script>
+</body>
+</html>
